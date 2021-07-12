@@ -3,6 +3,10 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using MyFace.Models.Database;
 using MyFace.Models.Request;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using System;
+using System.Text;
 
 namespace MyFace.Repositories
 {
@@ -60,6 +64,8 @@ namespace MyFace.Repositories
 
         public User Create(CreateUserRequest newUser)
         {
+            var salt = CreateSalt();
+
             var insertResponse = _context.Users.Add(new User
             {
                 FirstName = newUser.FirstName,
@@ -68,10 +74,56 @@ namespace MyFace.Repositories
                 Username = newUser.Username,
                 ProfileImageUrl = newUser.ProfileImageUrl,
                 CoverImageUrl = newUser.CoverImageUrl,
+                Salt = salt,
+                HashedPassword = HashPassword(newUser.Password, salt)
             });
             _context.SaveChanges();
 
             return insertResponse.Entity;
+        }
+
+        public static byte[] CreateSalt()
+        {
+            var salt = new byte[128 / 8];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+               rng.GetBytes(salt);
+            }
+            return salt;
+        }
+
+        public static string HashPassword(string password, byte[] salt)
+        {
+            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            password: password,
+            salt: salt,
+            prf: KeyDerivationPrf.HMACSHA1,
+            iterationCount: 10000,
+            numBytesRequested: 256 / 8));
+
+            return hashed;
+        }
+
+        public string IsAuthorized(string authHeader)
+        {
+            if (authHeader != null && authHeader.StartsWith("Basic"))
+            {
+                var encodedUsernamePassword = authHeader.Substring("Basic ".Length).Trim();
+                Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+                var usernamePassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+                var seperatorIndex = usernamePassword.IndexOf(':');
+
+                var username = usernamePassword.Substring(0, seperatorIndex);
+                var password = usernamePassword.Substring(seperatorIndex + 1);
+
+                
+            }
+            else
+            {
+                //Handle what happens if that isn't the case
+                throw new Exception("The authorization header is either empty or isn't Basic.");
+            }
         }
 
         public User Update(int id, UpdateUserRequest update)

@@ -2,6 +2,8 @@
 using MyFace.Models.Request;
 using MyFace.Models.Response;
 using MyFace.Repositories;
+using System;
+using System.Text;
 
 namespace MyFace.Controllers
 {
@@ -28,6 +30,10 @@ namespace MyFace.Controllers
         public ActionResult<UserResponse> GetById([FromRoute] int id)
         {
             var user = _users.GetById(id);
+
+            string authHeader = HttpContext.Request.Headers["Authorization"];
+
+            
             return new UserResponse(user);
         }
 
