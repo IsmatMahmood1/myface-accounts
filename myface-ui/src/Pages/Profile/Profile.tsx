@@ -8,7 +8,8 @@ import "./Profile.scss";
 import {Users} from "../Users/Users";
 
 export function Profile(): JSX.Element {
-    const {id} = useParams();
+    const {id} = useParams<{id:string}>();
+    
     
     if (id === undefined) {
         // Shouldn't ever happen - but if the ID is somehow undefined, show the base users page.

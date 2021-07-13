@@ -21,6 +21,13 @@ namespace MyFace.Controllers
         [HttpGet("")]
         public ActionResult<UserListResponse> Search([FromQuery] UserSearchRequest searchRequest)
         {
+            var authHeader = HttpContext.Request.Headers["Authorization"];
+
+            if (!_users.IsAuthorized(authHeader))
+            {
+                return Unauthorized();
+            }
+
             var users = _users.Search(searchRequest);
             var userCount = _users.Count(searchRequest);
             return UserListResponse.Create(searchRequest, users, userCount);

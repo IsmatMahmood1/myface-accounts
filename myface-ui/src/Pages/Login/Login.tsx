@@ -11,7 +11,20 @@ export function Login(): JSX.Element {
     
     function tryLogin(event: FormEvent) {
         event.preventDefault();
-        loginContext.logIn();
+
+        const encodedDetails = Buffer.from(`${username}:${password}`).toString('base64');
+
+        const url = "https://localhost:5001/users/"
+
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${encodedDetails}`,
+                'Content-Type': 'application/json'
+            }}).then(() => {
+                console.log("Hello")
+                loginContext.logIn();
+            });
     }
     
     return (
