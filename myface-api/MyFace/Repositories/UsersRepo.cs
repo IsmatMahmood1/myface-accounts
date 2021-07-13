@@ -18,6 +18,8 @@ namespace MyFace.Repositories
         User Create(CreateUserRequest newUser);
         User Update(int id, UpdateUserRequest update);
         void Delete(int id);
+
+        bool IsAuthorized(string authHeader);
     }
     
     public class UsersRepo : IUsersRepo
@@ -104,26 +106,26 @@ namespace MyFace.Repositories
             return hashed;
         }
 
-        public string IsAuthorized(string authHeader)
+        public bool IsAuthorized(string authHeader)
         {
-            if (authHeader != null && authHeader.StartsWith("Basic"))
+            if (authHeader == null || !authHeader.StartsWith("Basic"))
             {
-                var encodedUsernamePassword = authHeader.Substring("Basic ".Length).Trim();
-                Encoding encoding = Encoding.GetEncoding("iso-8859-1");
-                var usernamePassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
-
-                var seperatorIndex = usernamePassword.IndexOf(':');
-
-                var username = usernamePassword.Substring(0, seperatorIndex);
-                var password = usernamePassword.Substring(seperatorIndex + 1);
-
-                
+                return false;
             }
-            else
-            {
-                //Handle what happens if that isn't the case
-                throw new Exception("The authorization header is either empty or isn't Basic.");
-            }
+            
+            var encodedUsernamePassword = authHeader.Substring("Basic ".Length).Trim();
+            var encoding = Encoding.GetEncoding("utf-8");
+            var usernamePassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+            var seperatorIndex = usernamePassword.IndexOf(':');
+
+            var username = usernamePassword.Substring(0, seperatorIndex);
+            var password = usernamePassword.Substring(seperatorIndex + 1);
+
+            var user = _context.Users.SingleOrDefault(u => u.Username == username);
+
+            return user != null && user.HashedPassword == HashPassword(password, user.Salt);
+            
         }
 
         public User Update(int id, UpdateUserRequest update)

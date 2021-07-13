@@ -31,9 +31,12 @@ namespace MyFace.Controllers
         {
             var user = _users.GetById(id);
 
-            string authHeader = HttpContext.Request.Headers["Authorization"];
+            var authHeader = HttpContext.Request.Headers["Authorization"];
 
-            
+            if (!_users.IsAuthorized(authHeader))
+            {
+                return Unauthorized();
+            }
             return new UserResponse(user);
         }
 
