@@ -58,6 +58,12 @@ namespace MyFace.Controllers
         [HttpPatch("{id}/update")]
         public ActionResult<UserResponse> Update([FromRoute] int id, [FromBody] UpdateUserRequest update)
         {
+            var authHeader = HttpContext.Request.Headers["Authorization"];
+
+            if (!_users.IsAuthorized(authHeader))
+            {
+                return Unauthorized();
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -70,6 +76,12 @@ namespace MyFace.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete([FromRoute] int id)
         {
+            var authHeader = HttpContext.Request.Headers["Authorization"];
+
+            if (!_users.IsAuthorized(authHeader))
+            {
+                return Unauthorized();
+            }
             _users.Delete(id);
             return Ok();
         }
